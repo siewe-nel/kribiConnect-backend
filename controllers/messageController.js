@@ -1,7 +1,7 @@
 const { Message, User } = require('../models/Index');
 const { Op } = require('sequelize');
 
-// Helper pour savoir si quelqu'un est en ligne (actif dans les 2 dernières minutes)
+// Helper statut en ligne
 const isUserOnline = (lastSeenDate) => {
     if (!lastSeenDate) return false;
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
@@ -32,7 +32,7 @@ exports.getConversations = async (req, res) => {
                     avatar: partner.avatar,
                     lastMessage: msg.content.startsWith('FILE:') ? 'Pièce jointe' : msg.content,
                     lastMessageDate: msg.createdAt,
-                    isOnline: isUserOnline(partner.lastSeen) // Calcul du statut réel
+                    isOnline: isUserOnline(partner.lastSeen)
                 });
             }
         });
@@ -54,7 +54,6 @@ exports.getConversation = async (req, res) => {
       include: [{ model: User, as: 'sender', attributes: ['id', 'name', 'avatar'] }]
     });
     
-    // On récupère aussi l'info "lastSeen" du partenaire pour l'afficher dans le chat
     const partner = await User.findByPk(userId2, { attributes: ['lastSeen'] });
     
     res.json({ 
@@ -69,9 +68,12 @@ exports.sendMessage = async (req, res) => {
     const { senderId, receiverId, content, productContext } = req.body;
     let finalContent = content || '';
 
-    if (req.file) finalContent = `FILE:${req.file.filename}`;
+    // Cloudinary : req.file.path contient l'URL HTTPS directe
+    if (req.file) {
+        console.log('Fichier Cloudinary :', req.file.path);
+        finalContent = `FILE:${req.file.path}`;
+    }
 
-    // On parse productContext s'il arrive en string JSON depuis le FormData
     let parsedContext = null;
     if (productContext) {
         try { parsedContext = JSON.parse(productContext); } catch(e) { parsedContext = productContext; }
@@ -80,7 +82,7 @@ exports.sendMessage = async (req, res) => {
     const newMessage = await Message.create({
         senderId, receiverId, 
         content: finalContent,
-        productContext: parsedContext, // Sauvegarde en base
+        productContext: parsedContext, 
         isRead: false
     });
     res.status(201).json(newMessage);
