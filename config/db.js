@@ -5,8 +5,8 @@ const { Sequelize } = require('sequelize');
 
 console.log('--- [Config] Initialisation de la connexion Sequelize...');
 
-const sequelize = new Sequelize('kribi', 'root', '', {
-  host: 'localhost',
+const sequelize = new Sequelize('sql3809084', 'sql3809084', 'ZCpGNsMQhX', {
+  host: 'sql3.freesqldatabase.com',
   dialect: 'mysql',
   logging: false, // Mettre à 'true' pour voir les requêtes SQL brutes dans la console
 });
