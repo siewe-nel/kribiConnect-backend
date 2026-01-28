@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
-const Message = sequelize.define('Message', {
+const Message = sequelize.define('message', {
   content: { type: DataTypes.TEXT, allowNull: false },
   isRead: { type: DataTypes.BOOLEAN, defaultValue: false },
   // Nouveau : Stocke les infos du produit en JSON (titre, image, prix)
