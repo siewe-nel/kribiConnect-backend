@@ -50,21 +50,30 @@ app.get('/', (req, res) => {
 });
 
 // --- DÉMARRAGE ---
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 5000;
-  const startServer = async () => {
-    try {
-      await connectDB();
-      await sequelize.sync({ alter: true }); 
-      console.log('--- [Database] Tables synchronisées');
+
+const startServer = async () => {
+  try {
+    // 1. On se connecte et on synchronise PEU IMPORTE l'environnement
+    await connectDB();
+    
+    // Note: sequelize.sync est safe si la table existe déjà
+    await sequelize.sync({ alter: true }); 
+    console.log('--- [Database] Tables synchronisées');
+
+    // 2. On ne lance app.listen que si on n'est PAS sur Vercel (ou en local)
+    // Vercel gère le "listen" lui-même, mais il a besoin que les exports soient prêts
+    if (process.env.NODE_ENV !== 'production') {
+      const PORT = process.env.PORT || 5000;
       app.listen(PORT, () => {
         console.log(`\n>>> Serveur prêt sur http://localhost:${PORT}`);
       });
-    } catch (error) {
-      console.error('!!! Erreur fatale:', error);
     }
-  };
-  startServer();
-}
+  } catch (error) {
+    console.error('!!! Erreur fatale au démarrage:', error);
+  }
+};
+
+// Lancer l'initialisation
+startServer();
 
 module.exports = app;
