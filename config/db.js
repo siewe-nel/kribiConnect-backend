@@ -10,7 +10,7 @@ require('dotenv').config();
 console.log('--- [Config] Initialisation de la connexion Sequelize (PostgreSQL)...');
 
 // URL de connexion Supabase fournie
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres.pvtodattzfsnuinroixl:Vitris%4033%401@aws-1-eu-west-3.pooler.supabase.com:5432/postgres';
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres.pvtodattzfsnuinroixl:TtZhFchhvAGLfNg0@aws-1-eu-west-3.pooler.supabase.com:5432/postgres';
 
 const sequelize = new Sequelize(DATABASE_URL, {
   dialect: 'postgres',
