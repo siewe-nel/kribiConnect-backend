@@ -36,10 +36,14 @@ const sequelize = new Sequelize(DATABASE_URL, {
 const connectDB = async () => {
   try {
     await sequelize.authenticate();
-    console.log('--- [Config] Connexion à PostgreSQL (Supabase) réussie via Sequelize !');
+    console.log('--- [Config] Connexion à PostgreSQL réussie !');
+
+    // On attend que la synchronisation soit finie
+    await sequelize.sync({ alter: true });
+    console.log("✅ Tables synchronisées avec succès");
+
   } catch (error) {
-    console.error('--- [Config] Erreur de connexion à PostgreSQL:', error);
-    console.log('--- [Conseil] Vérifiez que le mot de passe dans l\'URL est correct et que les caractères spéciaux sont encodés.');
+    console.error('--- [Config] Erreur de connexion ou de synchro:', error);
   }
 };
 
