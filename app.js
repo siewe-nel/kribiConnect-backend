@@ -3,7 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const { connectDB } = require('./config/db');
 const { sequelize } = require('./models/Index'); 
-
+const { seedAdmin } = require('./config/seed'); // Import du code ci-dessus
 // --- IMPORTS DES ROUTES ---
 const serviceRoutes = require('./routes/serviceRoutes');
 const messageRoutes = require('./routes/messageRoutes');
@@ -72,25 +72,33 @@ app.get('/', (req, res) => {
 
 const startServer = async () => {
   try {
-    // 1. On se connecte et on synchronise PEU IMPORTE l'environnement
-    await connectDB();
-    
-    // Note: sequelize.sync est safe si la table existe déjà
-    await sequelize.sync({ alter: true }); 
-    console.log('--- [Database] Tables synchronisées');
+    // 1. Connexion et synchronisation
+    // Utilise 'alter: true' en dev pour mettre à jour les colonnes sans tout supprimer
+    // Utilise 'force: false' en prod pour ne rien casser
+    await sequelize.sync({ alter: process.env.NODE_ENV !== 'production' }); 
+    console.log("--- [Database] Connexion et synchronisation réussies ---");
 
-    // 2. On ne lance app.listen que si on n'est PAS sur Vercel (ou en local)
-    // Vercel gère le "listen" lui-même, mais il a besoin que les exports soient prêts
+    // 2. Lancement du seeding automatique de l'admin
+    await seedAdmin();
+
+    // 3. Gestion du port (Crucial pour Vercel)
+    // NOTE : Vercel n'aime pas trop le "app.listen" classique dans ses Serverless Functions.
+    // Mais pour garder la compatibilité locale, on l'isole :
     if (process.env.NODE_ENV !== 'production') {
       const PORT = process.env.PORT || 5000;
       app.listen(PORT, () => {
-        console.log(`\n>>> Serveur prêt sur http://localhost:${PORT}`);
+        console.log(`🚀 [Local] Serveur prêt sur http://localhost:${PORT}`);
       });
+    } else {
+      console.log("--- [Production] Mode Serverless activé (Vercel) ---");
     }
   } catch (error) {
-    console.error('!!! Erreur fatale au démarrage:', error);
+    console.error("❌ !!! Erreur fatale au démarrage:", error);
+    // On ne veut pas que le processus continue si la DB est HS
+    process.exit(1); 
   }
 };
+
 
 // Lancer l'initialisation
 startServer();
