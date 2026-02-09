@@ -37,7 +37,26 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // NOTE : On a supprimé app.use('/uploads'...) car Cloudinary gère les fichiers maintenant.
+exports.seedAdmin = async () => {
+  try {
+    const adminEmail = "nel@kribiconnect.com"; // Email par défaut pour l'admin nel
+    const existingAdmin = await User.findOne({ where: { name: 'nel' } });
 
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash('nel1234', 10);
+      await User.create({
+        name: 'nel',
+        email: adminEmail,
+        password: hashedPassword,
+        role: 'admin',
+        avatar: `https://ui-avatars.com/api/?name=nel&background=E63946&color=fff`
+      });
+      console.log("Admin par défaut 'nel' créé avec succès.");
+    }
+  } catch (error) {
+    console.error("Erreur lors du seeding de l'admin:", error);
+  }
+};
 // --- ROUTES API ---
 app.use('/api/auth', authRoutes);
 app.use('/api/services', serviceRoutes);
