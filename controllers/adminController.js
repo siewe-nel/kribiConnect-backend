@@ -1,6 +1,31 @@
 const { User, Service } = require('../models/Index');
 const bcrypt = require('bcryptjs');
 
+/**
+ * Initialisation automatique de l'administrateur par défaut
+ * Crée l'admin "nel" avec le mot de passe "nel1234" s'il n'existe pas.
+ */
+exports.seedAdmin = async () => {
+  try {
+    const adminEmail = "nel@kribiconnect.com"; // Email par défaut pour l'admin nel
+    const existingAdmin = await User.findOne({ where: { name: 'nel' } });
+
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash('nel1234', 10);
+      await User.create({
+        name: 'nel',
+        email: adminEmail,
+        password: hashedPassword,
+        role: 'admin',
+        avatar: `https://ui-avatars.com/api/?name=nel&background=E63946&color=fff`
+      });
+      console.log("Admin par défaut 'nel' créé avec succès.");
+    }
+  } catch (error) {
+    console.error("Erreur lors du seeding de l'admin:", error);
+  }
+};
+
 // 1. Stats Globales
 exports.getStats = async (req, res) => {
   try {
@@ -11,11 +36,11 @@ exports.getStats = async (req, res) => {
     const clientCount = await User.count({ where: { role: 'client' } });
 
     res.json({
-        totalUsers: userCount,
-        services: serviceCount,
-        providers: providerCount,
-        admins: adminCount,
-        clients: clientCount
+      totalUsers: userCount,
+      services: serviceCount,
+      providers: providerCount,
+      admins: adminCount,
+      clients: clientCount
     });
   } catch (error) {
     res.status(500).json({ error: "Erreur stats" });
@@ -24,58 +49,61 @@ exports.getStats = async (req, res) => {
 
 // 2. Récupérer utilisateurs par rôle
 exports.getUsersByRole = async (req, res) => {
-    const { role } = req.params; // 'client', 'provider', 'admin' ou 'all'
-    try {
-        const whereClause = role === 'all' ? {} : { role };
-        const users = await User.findAll({
-            where: whereClause,
-            order: [['createdAt', 'DESC']],
-            attributes: { exclude: ['password'] }
-        });
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ error: "Erreur liste utilisateurs" });
-    }
+  const { role } = req.params; 
+  try {
+    const whereClause = role === 'all' ? {} : { role };
+    const users = await User.findAll({
+      where: whereClause,
+      order: [['createdAt', 'DESC']],
+      attributes: { exclude: ['password'] }
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Erreur liste utilisateurs" });
+  }
 };
 
 // 3. Créer un utilisateur (Admin, Client ou Fournisseur)
 exports.createUser = async (req, res) => {
-    try {
-        const { name, email, password, role } = req.body;
-        const existingUser = await User.findOne({ where: { email } });
-        if (existingUser) return res.status(400).json({ message: "Email déjà pris" });
+  try {
+    const { name, email, password, role } = req.body;
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) return res.status(400).json({ message: "Email déjà pris" });
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await User.create({
-            name, email, password: hashedPassword, role,
-            avatar: `https://ui-avatars.com/api/?name=${name}&background=random`
-        });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await User.create({
+      name, 
+      email, 
+      password: hashedPassword, 
+      role,
+      avatar: `https://ui-avatars.com/api/?name=${name}&background=random`
+    });
 
-        res.status(201).json({ message: "Utilisateur créé", user: newUser });
-    } catch (error) {
-        res.status(500).json({ message: "Erreur création" });
-    }
+    res.status(201).json({ message: "Utilisateur créé", user: newUser });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur création" });
+  }
 };
 
 // 4. Modifier un utilisateur
 exports.updateUser = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, email, role } = req.body;
-        
-        await User.update({ name, email, role }, { where: { id } });
-        res.json({ message: "Utilisateur mis à jour" });
-    } catch (error) {
-        res.status(500).json({ message: "Erreur mise à jour" });
-    }
+  try {
+    const { id } = req.params;
+    const { name, email, role } = req.body;
+    
+    await User.update({ name, email, role }, { where: { id } });
+    res.json({ message: "Utilisateur mis à jour" });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur mise à jour" });
+  }
 };
 
 // 5. Supprimer un utilisateur
 exports.deleteUser = async (req, res) => {
-    try {
-        await User.destroy({ where: { id: req.params.id } });
-        res.json({ message: "Utilisateur supprimé" });
-    } catch (error) {
-        res.status(500).json({ message: "Erreur suppression" });
-    }
+  try {
+    await User.destroy({ where: { id: req.params.id } });
+    res.json({ message: "Utilisateur supprimé" });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur suppression" });
+  }
 };
